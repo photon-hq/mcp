@@ -3,6 +3,8 @@ import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
 import { getSDK, withTimeout, ToolTimeoutError } from "../../lib/sdk-pool";
 
+const AVAILABILITY_TIMEOUT_MS = 10_000;
+
 export const schema = {
   address: z.string().describe("The address (email or phone) to check"),
   type: z.enum(["imessage", "facetime"]).describe("The service type to check availability for"),
@@ -25,7 +27,7 @@ export default async function handler(args: InferSchema<typeof schema>) {
   try {
     const result = await withTimeout(
       sdk.handles.getHandleAvailability(args.address, args.type),
-      10_000,
+      AVAILABILITY_TIMEOUT_MS,
     );
     return JSON.stringify(result);
   } catch (err) {

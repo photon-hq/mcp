@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
-import { getSDK, withTimeout } from "../../lib/sdk-pool";
+import { getSDK } from "../../lib/sdk-pool";
 
 export const schema = {
   address: z.string().optional().describe("Filter by address"),
@@ -29,10 +29,7 @@ export default async function handler(args: InferSchema<typeof schema>) {
   if (args.with !== undefined) options.with = args.with;
   if (args.offset !== undefined) options.offset = args.offset;
   if (args.limit !== undefined) options.limit = args.limit;
-  const result = await withTimeout(
-    sdk.handles.queryHandles(Object.keys(options).length > 0 ? options : undefined),
-    15_000,
-  );
+  const result = await sdk.handles.queryHandles(Object.keys(options).length > 0 ? options : undefined);
   const data = (result as any)?.data ?? result;
   return JSON.stringify(data);
 }

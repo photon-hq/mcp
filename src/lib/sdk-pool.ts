@@ -106,6 +106,29 @@ function attachEventListeners(entry: PoolEntry): void {
   }
 }
 
+function wrapWithTimeouts(sdk: AdvancedIMessageKit): AdvancedIMessageKit {
+  return new Proxy(sdk, {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+      if (typeof value !== "object" || value === null) return value;
+
+      return new Proxy(value, {
+        get(nsTarget, nsProp, nsReceiver) {
+          const method = Reflect.get(nsTarget, nsProp, nsReceiver);
+          if (typeof method !== "function") return method;
+          return (...args: unknown[]) => {
+            const result = method.apply(nsTarget, args);
+            if (result && typeof result.then === "function") {
+              return withTimeout(result, DEFAULT_TOOL_TIMEOUT_MS);
+            }
+            return result;
+          };
+        },
+      });
+    },
+  }) as AdvancedIMessageKit;
+}
+
 export async function getSDK(serverUrl: string, apiKey: string): Promise<AdvancedIMessageKit> {
   const key = hashKey(serverUrl, apiKey);
   const existing = pool.get(key);
@@ -120,7 +143,7 @@ export async function getSDK(serverUrl: string, apiKey: string): Promise<Advance
         throw new BackendUnavailableError("Connection to iMessage backend failed");
       }
     }
-    return existing.sdk;
+    return wrapWithTimeouts(existing.sdk);
   }
 
   let sdk: AdvancedIMessageKit;
@@ -151,7 +174,7 @@ export async function getSDK(serverUrl: string, apiKey: string): Promise<Advance
   entry.connectPromise = connectPromise;
   await connectPromise;
 
-  return sdk;
+  return wrapWithTimeouts(sdk);
 }
 
 export interface PollResult {
