@@ -17,8 +17,8 @@ pnpm dev
     "photon-imessage": {
       "url": "https://mcp.photon.codes/mcp",
       "headers": {
-        "x-server-url": "http://your-imessage-server:1234",
-        "x-api-key": "your-api-key"
+        "x-server-url": "https://your-endpoint-here",
+        "x-api-key": "your-api-key-here"
       }
     }
   }
