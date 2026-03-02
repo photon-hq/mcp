@@ -5,7 +5,7 @@ import { getSDK } from "../../lib/sdk-pool";
 
 export const schema = {
   chatGuid: z.string().describe("The GUID of the chat to create the poll in"),
-  question: z.string().optional().describe("The poll question/title"),
+  question: z.string().describe("The poll question displayed as the title"),
   options: z.array(z.string()).describe("The poll options"),
 };
 
