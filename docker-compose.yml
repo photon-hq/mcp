@@ -1,0 +1,21 @@
+services:
+  mcp:
+    build: .
+    expose:
+      - "3001"
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').createConnection({port:3001}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
