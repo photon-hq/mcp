@@ -1,6 +1,33 @@
 import { SDK, type AdvancedIMessageKit, type PhotonEventName } from "@photon-ai/advanced-imessage-kit";
 import { createHash } from "node:crypto";
 
+const DEFAULT_TOOL_TIMEOUT_MS = 30_000;
+
+export class ToolTimeoutError extends Error {
+  constructor(ms: number) {
+    super(`Tool execution timed out after ${ms}ms`);
+    this.name = "ToolTimeoutError";
+  }
+}
+
+export class BackendUnavailableError extends Error {
+  constructor(cause?: unknown) {
+    const msg = cause instanceof Error ? cause.message : String(cause);
+    super(`iMessage backend unavailable: ${msg}`);
+    this.name = "BackendUnavailableError";
+  }
+}
+
+export function withTimeout<T>(promise: Promise<T>, ms: number = DEFAULT_TOOL_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new ToolTimeoutError(ms)), ms);
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
 export interface BufferedEvent {
   id: number;
   event: string;
@@ -103,12 +130,15 @@ export async function getSDK(serverUrl: string, apiKey: string): Promise<Advance
 
   pool.set(key, entry);
 
-  const connectPromise = sdk.connect().then(() => {
+  const connectPromise = withTimeout(sdk.connect(), 15_000).then(() => {
     entry.connectPromise = null;
     attachEventListeners(entry);
   }).catch((err) => {
     pool.delete(key);
-    throw err;
+    if (err instanceof ToolTimeoutError) {
+      throw new BackendUnavailableError(err);
+    }
+    throw new BackendUnavailableError(err);
   });
 
   entry.connectPromise = connectPromise;
