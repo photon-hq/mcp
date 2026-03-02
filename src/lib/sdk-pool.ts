@@ -113,12 +113,22 @@ export async function getSDK(serverUrl: string, apiKey: string): Promise<Advance
   if (existing) {
     existing.lastUsedAt = Date.now();
     if (existing.connectPromise) {
-      await existing.connectPromise;
+      try {
+        await existing.connectPromise;
+      } catch {
+        pool.delete(key);
+        throw new BackendUnavailableError("Connection to iMessage backend failed");
+      }
     }
     return existing.sdk;
   }
 
-  const sdk = SDK({ serverUrl, apiKey });
+  let sdk: AdvancedIMessageKit;
+  try {
+    sdk = SDK({ serverUrl, apiKey });
+  } catch (err) {
+    throw new BackendUnavailableError(err);
+  }
 
   const entry: PoolEntry = {
     sdk,
@@ -135,9 +145,6 @@ export async function getSDK(serverUrl: string, apiKey: string): Promise<Advance
     attachEventListeners(entry);
   }).catch((err) => {
     pool.delete(key);
-    if (err instanceof ToolTimeoutError) {
-      throw new BackendUnavailableError(err);
-    }
     throw new BackendUnavailableError(err);
   });
 
