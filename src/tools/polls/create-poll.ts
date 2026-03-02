@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
-import { getSDK } from "../../lib/sdk-pool";
+import { getSDK, withTimeout } from "../../lib/sdk-pool";
 
 export const schema = {
   chatGuid: z.string().describe("The GUID of the chat to create the poll in"),
-  title: z.string().optional().describe("The poll title"),
+  question: z.string().optional().describe("The poll question/title"),
   options: z.array(z.string()).describe("The poll options"),
 };
 
@@ -23,6 +23,9 @@ export const metadata = {
 export default async function handler(args: InferSchema<typeof schema>) {
   const h = headers();
   const sdk = await getSDK(h["x-server-url"] as string, h["x-api-key"] as string);
-  const result = await sdk.polls.create({ chatGuid: args.chatGuid, title: args.title, options: args.options });
+  const result = await withTimeout(
+    sdk.polls.create({ chatGuid: args.chatGuid, title: args.question, options: args.options }),
+    25_000,
+  );
   return JSON.stringify(result);
 }
