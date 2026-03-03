@@ -2,6 +2,22 @@
 
 MCP servers for Photon, deployed at `mcp.photon.codes`.
 
+## Usage
+
+```json
+{
+  "mcpServers": {
+    "photon-imessage": {
+      "url": "https://mcp.photon.codes/imessage",
+      "headers": {
+        "x-server-url": "https://your-endpoint-here",
+        "x-api-key": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
 ## Services
 
 | Service | Endpoint | Port |
@@ -32,22 +48,6 @@ pnpm dev:gateway
 ```bash
 pnpm build
 docker compose up -d
-```
-
-## Client Config
-
-```json
-{
-  "mcpServers": {
-    "photon-imessage": {
-      "url": "https://mcp.photon.codes/imessage",
-      "headers": {
-        "x-server-url": "https://your-endpoint-here",
-        "x-api-key": "your-api-key-here"
-      }
-    }
-  }
-}
 ```
 
 ## Structure
