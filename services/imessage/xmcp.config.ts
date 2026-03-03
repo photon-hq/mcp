@@ -17,7 +17,7 @@ const config: XmcpConfig = {
   http: {
     port: 3001,
     host: "0.0.0.0",
-    endpoint: "/mcp",
+    endpoint: "/imessage",
     cors: {
       origin: "*",
       methods: ["GET", "POST"],
