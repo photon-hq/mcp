@@ -1,24 +1,36 @@
-# Photon MCP Monorepo
+# Photon MCP
 
-Multi-service MCP server monorepo deployed at `mcp.photon.codes`. Each MCP service runs independently and is routed through a shared gateway.
+MCP servers for Photon, deployed at `mcp.photon.codes`.
 
 ## Services
 
-| Service | Path | Port | Description |
-|---------|------|------|-------------|
-| **Gateway** | `mcp.photon.codes/*` | 3000 | Reverse proxy routing to MCP services |
-| **iMessage** | `mcp.photon.codes/imessage` | 3001 | iMessage SDK via `@photon-ai/advanced-imessage-kit` |
+| Service | Endpoint | Port |
+|---------|----------|------|
+| Gateway | `/*` | 3000 |
+| iMessage | `/imessage` | 3001 |
 
-## Quick Start
+## Setup
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-## Client Configuration
+Run a single service:
 
-### iMessage
+```bash
+pnpm dev:imessage
+pnpm dev:gateway
+```
+
+## Build & Deploy
+
+```bash
+pnpm build
+docker compose up -d
+```
+
+## Client Config
 
 ```json
 {
@@ -37,24 +49,7 @@ pnpm dev
 ## Structure
 
 ```
-mcp/
-  gateway/          Reverse proxy gateway
-  services/
-    imessage/       iMessage MCP server (67 tools)
-```
-
-## Adding a New MCP Service
-
-1. Create `services/<name>/` with `package.json`, `xmcp.config.ts`, `Dockerfile`, and `src/tools/`
-2. Set the endpoint to `/<name>` and pick a unique port
-3. Add `ROUTE_<NAME>: "http://<name>:<port>"` to the gateway environment in `docker-compose.yml`
-4. Add the service block to `docker-compose.yml`
-
-## Deployment
-
-Deployed on Dokploy via Docker Compose. The gateway receives all traffic at `mcp.photon.codes` and proxies to internal service containers.
-
-```bash
-pnpm build
-docker compose up -d
+gateway/              reverse proxy
+services/
+  imessage/           iMessage MCP (67 tools)
 ```
