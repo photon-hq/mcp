@@ -4,6 +4,8 @@ MCP servers for Photon, deployed at `mcp.photon.codes`.
 
 ## Usage
 
+### iMessage
+
 ```json
 {
   "mcpServers": {
