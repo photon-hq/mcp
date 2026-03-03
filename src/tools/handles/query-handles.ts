@@ -5,7 +5,7 @@ import { getSDK } from "../../lib/sdk-pool";
 
 export const schema = {
   address: z.string().optional().describe("Filter by address"),
-  with: z.array(z.string()).optional().describe("Additional filter criteria"),
+  with: z.array(z.string()).optional().describe("Additional data to include (e.g. 'chats')"),
   offset: z.number().optional().describe("Number of handles to skip"),
   limit: z.number().optional().describe("Maximum number of handles to return"),
 };
@@ -30,5 +30,6 @@ export default async function handler(args: InferSchema<typeof schema>) {
   if (args.offset !== undefined) options.offset = args.offset;
   if (args.limit !== undefined) options.limit = args.limit;
   const result = await sdk.handles.queryHandles(Object.keys(options).length > 0 ? options : undefined);
-  return JSON.stringify(result);
+  const data = (result as any)?.data ?? result;
+  return JSON.stringify(data);
 }
