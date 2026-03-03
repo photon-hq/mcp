@@ -6,6 +6,8 @@ MCP servers for Photon, deployed at `mcp.photon.codes`.
 
 ### iMessage
 
+Exposes 67 MCP tools for iMessage — chats, messages, attachments, contacts, polls, scheduled messages, FaceTime, Find My, and more. Built on [`@photon-ai/advanced-imessage-kit`](https://www.npmjs.com/package/@photon-ai/advanced-imessage-kit). Each client authenticates via `x-server-url` and `x-api-key` headers.
+
 ```json
 {
   "mcpServers": {
@@ -26,10 +28,6 @@ MCP servers for Photon, deployed at `mcp.photon.codes`.
 |---------|----------|------|
 | Gateway | `/*` | 3000 |
 | iMessage | `/imessage` | 3001 |
-
-### iMessage
-
-Exposes 67 MCP tools for iMessage — chats, messages, attachments, contacts, polls, scheduled messages, FaceTime, Find My, and more. Built on [`@photon-ai/advanced-imessage-kit`](https://www.npmjs.com/package/@photon-ai/advanced-imessage-kit). Each client authenticates via `x-server-url` and `x-api-key` headers.
 
 ## Setup
 
