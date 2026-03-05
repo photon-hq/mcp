@@ -1,6 +1,8 @@
 services:
   mcp:
-    build: ./gateway
+    build:
+      context: .
+      dockerfile: ./gateway/Dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -21,7 +23,9 @@ services:
       - dokploy-network
 
   imessage:
-    build: ./services/imessage
+    build:
+      context: .
+      dockerfile: ./services/imessage/Dockerfile
     expose:
       - "3001"
     environment:
