@@ -1,5 +1,5 @@
 services:
-  gateway:
+  mcp:
     build: ./gateway
     ports:
       - "3000:3000"
