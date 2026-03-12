@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
 import { getSDK } from "../../lib/sdk-pool";
+import { validateChatExists } from "../../lib/chat-validator";
 
 export const schema = {
   chatGuid: z.string().describe("The GUID of the chat to send the audio message to"),
@@ -23,6 +24,9 @@ export const metadata = {
 export default async function handler(args: InferSchema<typeof schema>) {
   const h = headers();
   const sdk = await getSDK(h["x-server-url"] as string, h["x-api-key"] as string);
+  
+  await validateChatExists(sdk, args.chatGuid);
+  
   const result = await sdk.attachments.sendAttachment({
     chatGuid: args.chatGuid,
     filePath: args.filePath,
