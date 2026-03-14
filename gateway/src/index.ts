@@ -61,13 +61,29 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.use((_req, res) => {
-  res.status(404).json({
-    jsonrpc: "2.0",
-    error: { code: -32601, message: "Unknown service path" },
-    id: null,
-  });
-});
+const defaultService = routes[0];
+if (defaultService) {
+  app.use(
+    "/",
+    createProxyMiddleware({
+      target: defaultService.target,
+      changeOrigin: true,
+      ws: true,
+      on: {
+        error(err, _req, res) {
+          console.error(`Proxy error for /:`, err.message);
+          if ("writeHead" in res && typeof res.writeHead === "function") {
+            (res as express.Response).status(502).json({
+              jsonrpc: "2.0",
+              error: { code: -32000, message: "Service unavailable" },
+              id: null,
+            });
+          }
+        },
+      },
+    }),
+  );
+}
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Gateway listening on :${PORT}`);
