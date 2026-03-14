@@ -63,26 +63,9 @@ app.get("/health", (_req, res) => {
 
 const defaultService = routes[0];
 if (defaultService) {
-  app.use(
-    "/",
-    createProxyMiddleware({
-      target: defaultService.target,
-      changeOrigin: true,
-      ws: true,
-      on: {
-        error(err, _req, res) {
-          console.error(`Proxy error for /:`, err.message);
-          if ("writeHead" in res && typeof res.writeHead === "function") {
-            (res as express.Response).status(502).json({
-              jsonrpc: "2.0",
-              error: { code: -32000, message: "Service unavailable" },
-              id: null,
-            });
-          }
-        },
-      },
-    }),
-  );
+  app.get("/", (_req, res) => {
+    res.redirect(defaultService.path);
+  });
 }
 
 app.listen(PORT, "0.0.0.0", () => {
