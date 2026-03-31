@@ -19,7 +19,7 @@ const config: XmcpConfig = {
     host: "0.0.0.0",
     endpoint: "/imessage",
     cors: {
-      origin: "*",
+      origin: process.env.CORS_ORIGIN || "https://mcp.photon.codes",
       methods: ["GET", "POST"],
       allowedHeaders: [
         "Content-Type",
