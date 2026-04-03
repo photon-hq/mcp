@@ -45,7 +45,7 @@ export async function validateChatExists(
     const chat = await sdk.chats.getChat(chatGuid, { with: ["lastMessage"] });
     
     if (!chat) {
-      throw new InboundFirstPolicyError(chatGuid);
+      throw new ChatNotFoundError();
     }
 
     const hasLastMessage = chat.lastMessage !== undefined && chat.lastMessage !== null;
@@ -68,12 +68,12 @@ export async function validateChatExists(
       throw new InboundFirstPolicyError(chatGuid);
     }
   } catch (error) {
-    if (error instanceof InboundFirstPolicyError) {
+    if (error instanceof InboundFirstPolicyError || error instanceof ChatNotFoundError) {
       throw error;
     }
     
     if (isNotFoundError(error)) {
-      throw new InboundFirstPolicyError(chatGuid);
+      throw new ChatNotFoundError();
     }
     
     throw error;

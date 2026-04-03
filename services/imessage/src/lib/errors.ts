@@ -147,7 +147,9 @@ export function createErrorData(
   overrides?: Partial<Pick<ErrorData, "retry_after" | "suggested_action">>,
 ): ErrorData {
   const def = ERROR_CODES[errorCode];
-  const retryAfter = overrides?.retry_after ?? ("retry_after" in def ? def.retry_after : undefined);
+  const retryAfter = def.retryable
+    ? overrides?.retry_after ?? ("retry_after" in def ? def.retry_after : undefined)
+    : undefined;
   return {
     error_code: errorCode,
     category: def.category,
