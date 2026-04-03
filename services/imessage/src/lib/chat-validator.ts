@@ -4,7 +4,7 @@ import { type ErrorData, createErrorData } from "./errors";
 export class InboundFirstPolicyError extends Error {
   public readonly errorData: ErrorData;
 
-  constructor(_chatGuid: string) {
+  constructor() {
     super(
       "Inbound-first policy: cannot send to this chat because no inbound message has been received yet. Wait for the recipient to message first."
     );
@@ -59,13 +59,13 @@ export async function validateChatExists(
     const messages = await sdk.chats.getChatMessages(chatGuid, { limit: 50, sort: "DESC" });
     
     if (!messages || !Array.isArray(messages)) {
-      throw new InboundFirstPolicyError(chatGuid);
+      throw new InboundFirstPolicyError();
     }
 
     const hasInboundMessage = messages.some((msg: any) => msg.isFromMe === false);
     
     if (!hasInboundMessage) {
-      throw new InboundFirstPolicyError(chatGuid);
+      throw new InboundFirstPolicyError();
     }
   } catch (error) {
     if (error instanceof InboundFirstPolicyError || error instanceof ChatNotFoundError) {
