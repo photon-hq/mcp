@@ -1,5 +1,6 @@
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { randomBytes } from "node:crypto";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3000", 10);
@@ -44,7 +45,21 @@ for (const route of routes) {
           if ("writeHead" in res && typeof res.writeHead === "function") {
             (res as express.Response).status(502).json({
               jsonrpc: "2.0",
-              error: { code: -32000, message: "Service unavailable" },
+              error: {
+                code: -32000,
+                message: "Service unavailable",
+                data: {
+                  error_code: "SERVICE_UNAVAILABLE",
+                  category: "backend",
+                  status: 502,
+                  retryable: true,
+                  retry_after: 5,
+                  suggested_action:
+                    "The upstream service is unavailable. Retry in 5 seconds with exponential backoff.",
+                  timestamp: new Date().toISOString(),
+                  request_id: randomBytes(8).toString("hex"),
+                },
+              },
               id: null,
             });
           }
