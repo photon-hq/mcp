@@ -83,6 +83,37 @@ if (defaultService) {
   });
 }
 
+app.use(
+  (
+    err: Error,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    console.error("Unhandled gateway error:", err.message);
+    if (!res.headersSent) {
+      res.status(500).json({
+        jsonrpc: "2.0",
+        error: {
+          code: -32603,
+          message: "Internal gateway error",
+          data: {
+            error_code: "INTERNAL_ERROR",
+            category: "internal",
+            status: 500,
+            retryable: false,
+            suggested_action:
+              "An unexpected gateway error occurred. This may be a bug — do not retry with the same parameters.",
+            timestamp: new Date().toISOString(),
+            request_id: randomBytes(8).toString("hex"),
+          },
+        },
+        id: null,
+      });
+    }
+  },
+);
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Gateway listening on :${PORT}`);
   console.log(`Active routes: ${routes.map((r) => r.path).join(", ")}`);
