@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
 import { pollEvents } from "../../lib/sdk-pool";
+import { withStructuredErrors } from "../../lib/error-handler";
 
 export const schema = {
   cursor: z.number().optional().describe("Event cursor to poll from. Omit or pass 0 for all buffered events"),
@@ -19,9 +20,9 @@ export const metadata = {
   },
 };
 
-export default async function handler({ cursor, timeout }: InferSchema<typeof schema>) {
+export default withStructuredErrors(async ({ cursor, timeout }: InferSchema<typeof schema>) => {
   const h = headers();
   const timeoutMs = Math.min((timeout ?? 15) * 1000, 15000);
   const result = await pollEvents(h["x-server-url"] as string, h["x-api-key"] as string, cursor ?? 0, timeoutMs);
   return JSON.stringify(result);
-}
+});
