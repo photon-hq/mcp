@@ -1,11 +1,25 @@
 import type { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
+import { type ErrorData, createErrorData } from "./errors";
 
 export class InboundFirstPolicyError extends Error {
-  constructor(chatGuid: string) {
+  public readonly errorData: ErrorData;
+
+  constructor(_chatGuid: string) {
     super(
-      `Photon's inbound-first policy does not allow sending messages to chats you have not interacted with before (chat GUID: ${chatGuid}). This prevents spam and protects your account from potential bans. Please wait for the recipient to message you first.`
+      "Inbound-first policy: cannot send to this chat because no inbound message has been received yet. Wait for the recipient to message first."
     );
     this.name = "InboundFirstPolicyError";
+    this.errorData = createErrorData("INBOUND_FIRST_POLICY");
+  }
+}
+
+export class ChatNotFoundError extends Error {
+  public readonly errorData: ErrorData;
+
+  constructor() {
+    super("The specified chat does not exist.");
+    this.name = "ChatNotFoundError";
+    this.errorData = createErrorData("CHAT_NOT_FOUND");
   }
 }
 
