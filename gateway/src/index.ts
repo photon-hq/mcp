@@ -1,5 +1,6 @@
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { randomBytes } from "node:crypto";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3000", 10);
@@ -44,7 +45,21 @@ for (const route of routes) {
           if ("writeHead" in res && typeof res.writeHead === "function") {
             (res as express.Response).status(502).json({
               jsonrpc: "2.0",
-              error: { code: -32000, message: "Service unavailable" },
+              error: {
+                code: -32000,
+                message: "Service unavailable",
+                data: {
+                  error_code: "SERVICE_UNAVAILABLE",
+                  category: "backend",
+                  status: 502,
+                  retryable: true,
+                  retry_after: 5,
+                  suggested_action:
+                    "The upstream service is unavailable. Retry in 5 seconds with exponential backoff.",
+                  timestamp: new Date().toISOString(),
+                  request_id: randomBytes(8).toString("hex"),
+                },
+              },
               id: null,
             });
           }
@@ -67,6 +82,37 @@ if (defaultService) {
     res.redirect(defaultService.path);
   });
 }
+
+app.use(
+  (
+    err: Error,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    console.error("Unhandled gateway error:", err.message);
+    if (!res.headersSent) {
+      res.status(500).json({
+        jsonrpc: "2.0",
+        error: {
+          code: -32603,
+          message: "Internal gateway error",
+          data: {
+            error_code: "INTERNAL_ERROR",
+            category: "internal",
+            status: 500,
+            retryable: false,
+            suggested_action:
+              "An unexpected gateway error occurred. This may be a bug — do not retry with the same parameters.",
+            timestamp: new Date().toISOString(),
+            request_id: randomBytes(8).toString("hex"),
+          },
+        },
+        id: null,
+      });
+    }
+  },
+);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Gateway listening on :${PORT}`);

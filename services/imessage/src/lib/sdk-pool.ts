@@ -1,20 +1,30 @@
 import { SDK, type AdvancedIMessageKit, type PhotonEventName } from "@photon-ai/advanced-imessage-kit";
 import { createHash } from "node:crypto";
+import { type ErrorData, createErrorData } from "./errors";
 
 const DEFAULT_TOOL_TIMEOUT_MS = 30_000;
 
 export class ToolTimeoutError extends Error {
+  public readonly errorData: ErrorData;
+
   constructor(ms: number) {
     super(`Tool execution timed out after ${ms}ms`);
     this.name = "ToolTimeoutError";
+    this.errorData = createErrorData("TOOL_TIMEOUT", {
+      suggested_action: `The operation timed out after ${ms / 1000} seconds. Retry once — if the backend was under load, it may succeed. If the tool takes input that controls scope (e.g. message count), try reducing it.`,
+    });
   }
 }
 
 export class BackendUnavailableError extends Error {
-  constructor(cause?: unknown) {
-    const msg = cause instanceof Error ? cause.message : String(cause);
-    super(`iMessage backend unavailable: ${msg}`);
+  public readonly errorData: ErrorData;
+
+  constructor(cause?: unknown, errorCode: "BACKEND_UNAVAILABLE" | "BACKEND_CONNECTION_FAILED" | "CONNECT_TIMEOUT" = "BACKEND_UNAVAILABLE") {
+    const msg = cause instanceof Error ? cause.message : String(cause ?? "unknown");
+    const sanitized = msg.replace(/\d{1,3}(\.\d{1,3}){3}(:\d+)?/g, "[redacted]");
+    super(`iMessage backend unavailable: ${sanitized}`);
     this.name = "BackendUnavailableError";
+    this.errorData = createErrorData(errorCode);
   }
 }
 
@@ -140,7 +150,7 @@ export async function getSDK(serverUrl: string, apiKey: string): Promise<Advance
         await existing.connectPromise;
       } catch {
         pool.delete(key);
-        throw new BackendUnavailableError("Connection to iMessage backend failed");
+        throw new BackendUnavailableError("Connection to iMessage backend failed", "BACKEND_CONNECTION_FAILED");
       }
     }
     return wrapWithTimeouts(existing.sdk);
@@ -168,7 +178,8 @@ export async function getSDK(serverUrl: string, apiKey: string): Promise<Advance
     attachEventListeners(entry);
   }).catch((err) => {
     pool.delete(key);
-    throw new BackendUnavailableError(err);
+    const code = err instanceof ToolTimeoutError ? "CONNECT_TIMEOUT" as const : "BACKEND_CONNECTION_FAILED" as const;
+    throw new BackendUnavailableError(err, code);
   });
 
   entry.connectPromise = connectPromise;

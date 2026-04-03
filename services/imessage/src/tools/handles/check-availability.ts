@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
 import { getSDK, withTimeout, ToolTimeoutError } from "../../lib/sdk-pool";
+import { withStructuredErrors } from "../../lib/error-handler";
 
 const AVAILABILITY_TIMEOUT_MS = 10_000;
 
@@ -21,7 +22,7 @@ export const metadata = {
   },
 };
 
-export default async function handler(args: InferSchema<typeof schema>) {
+export default withStructuredErrors(async (args: InferSchema<typeof schema>) => {
   const h = headers();
   const sdk = await getSDK(h["x-server-url"] as string, h["x-api-key"] as string);
   try {
@@ -36,4 +37,4 @@ export default async function handler(args: InferSchema<typeof schema>) {
     }
     throw err;
   }
-}
+});

@@ -1,11 +1,25 @@
 import type { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
+import { type ErrorData, createErrorData } from "./errors";
 
 export class InboundFirstPolicyError extends Error {
-  constructor(chatGuid: string) {
+  public readonly errorData: ErrorData;
+
+  constructor() {
     super(
-      `Photon's inbound-first policy does not allow sending messages to chats you have not interacted with before (chat GUID: ${chatGuid}). This prevents spam and protects your account from potential bans. Please wait for the recipient to message you first.`
+      "Inbound-first policy: cannot send to this chat because no inbound message has been received yet. Wait for the recipient to message first."
     );
     this.name = "InboundFirstPolicyError";
+    this.errorData = createErrorData("INBOUND_FIRST_POLICY");
+  }
+}
+
+export class ChatNotFoundError extends Error {
+  public readonly errorData: ErrorData;
+
+  constructor() {
+    super("The specified chat does not exist.");
+    this.name = "ChatNotFoundError";
+    this.errorData = createErrorData("CHAT_NOT_FOUND");
   }
 }
 
@@ -31,7 +45,7 @@ export async function validateChatExists(
     const chat = await sdk.chats.getChat(chatGuid, { with: ["lastMessage"] });
     
     if (!chat) {
-      throw new InboundFirstPolicyError(chatGuid);
+      throw new ChatNotFoundError();
     }
 
     const hasLastMessage = chat.lastMessage !== undefined && chat.lastMessage !== null;
@@ -45,21 +59,21 @@ export async function validateChatExists(
     const messages = await sdk.chats.getChatMessages(chatGuid, { limit: 50, sort: "DESC" });
     
     if (!messages || !Array.isArray(messages)) {
-      throw new InboundFirstPolicyError(chatGuid);
+      throw new InboundFirstPolicyError();
     }
 
     const hasInboundMessage = messages.some((msg: any) => msg.isFromMe === false);
     
     if (!hasInboundMessage) {
-      throw new InboundFirstPolicyError(chatGuid);
+      throw new InboundFirstPolicyError();
     }
   } catch (error) {
-    if (error instanceof InboundFirstPolicyError) {
+    if (error instanceof InboundFirstPolicyError || error instanceof ChatNotFoundError) {
       throw error;
     }
     
     if (isNotFoundError(error)) {
-      throw new InboundFirstPolicyError(chatGuid);
+      throw new ChatNotFoundError();
     }
     
     throw error;

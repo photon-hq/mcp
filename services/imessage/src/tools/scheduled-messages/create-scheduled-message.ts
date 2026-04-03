@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
 import { getSDK } from "../../lib/sdk-pool";
+import { withStructuredErrors } from "../../lib/error-handler";
 
 export const schema = {
   chatGuid: z.string().describe("The GUID of the chat to send the scheduled message to"),
@@ -21,7 +22,7 @@ export const metadata = {
   },
 };
 
-export default async function handler(args: InferSchema<typeof schema>) {
+export default withStructuredErrors(async (args: InferSchema<typeof schema>) => {
   const h = headers();
   const sdk = await getSDK(h["x-server-url"] as string, h["x-api-key"] as string);
   const options: { chatGuid: string; message: string; scheduledFor: number; type?: string } = {
@@ -32,4 +33,4 @@ export default async function handler(args: InferSchema<typeof schema>) {
   if (args.type !== undefined) options.type = args.type;
   const result = await sdk.scheduledMessages.createScheduledMessage(options);
   return JSON.stringify(result);
-}
+});

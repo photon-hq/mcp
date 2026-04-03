@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
 import { getSDK } from "../../lib/sdk-pool";
+import { withStructuredErrors } from "../../lib/error-handler";
 
 export const schema = {
   addresses: z.array(z.string()).describe("Participant addresses (phone numbers or email)"),
@@ -21,7 +22,7 @@ export const metadata = {
   },
 };
 
-export default async function handler(args: InferSchema<typeof schema>) {
+export default withStructuredErrors(async (args: InferSchema<typeof schema>) => {
   const h = headers();
   const sdk = await getSDK(h["x-server-url"] as string, h["x-api-key"] as string);
   const options: { addresses: string[]; method?: "apple-script" | "private-api"; service?: "iMessage" | "SMS"; tempGuid?: string } = { addresses: args.addresses };
@@ -30,4 +31,4 @@ export default async function handler(args: InferSchema<typeof schema>) {
   if (args.tempGuid !== undefined) options.tempGuid = args.tempGuid;
   const result = await sdk.chats.createChat(options);
   return JSON.stringify(result);
-}
+});

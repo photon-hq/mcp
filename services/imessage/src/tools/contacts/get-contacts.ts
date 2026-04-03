@@ -1,6 +1,7 @@
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
 import { getSDK } from "../../lib/sdk-pool";
+import { withStructuredErrors } from "../../lib/error-handler";
 
 export const schema = {};
 
@@ -15,9 +16,9 @@ export const metadata = {
   },
 };
 
-export default async function handler(_args: InferSchema<typeof schema>) {
+export default withStructuredErrors(async (_args: InferSchema<typeof schema>) => {
   const h = headers();
   const sdk = await getSDK(h["x-server-url"] as string, h["x-api-key"] as string);
   const result = await sdk.contacts.getContacts();
   return JSON.stringify(result);
-}
+});

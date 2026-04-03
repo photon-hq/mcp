@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
 import { getSDK } from "../../lib/sdk-pool";
+import { withStructuredErrors } from "../../lib/error-handler";
 
 export const schema = {
   address: z.string().optional().describe("Filter by address"),
@@ -21,7 +22,7 @@ export const metadata = {
   },
 };
 
-export default async function handler(args: InferSchema<typeof schema>) {
+export default withStructuredErrors(async (args: InferSchema<typeof schema>) => {
   const h = headers();
   const sdk = await getSDK(h["x-server-url"] as string, h["x-api-key"] as string);
   const options: { address?: string; with?: string[]; offset?: number; limit?: number } = {};
@@ -32,4 +33,4 @@ export default async function handler(args: InferSchema<typeof schema>) {
   const result = await sdk.handles.queryHandles(Object.keys(options).length > 0 ? options : undefined);
   const data = (result as any)?.data ?? result;
   return JSON.stringify(data);
-}
+});

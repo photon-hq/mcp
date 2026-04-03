@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type InferSchema } from "xmcp";
 import { headers } from "xmcp/headers";
 import { getSDK } from "../../lib/sdk-pool";
+import { withStructuredErrors } from "../../lib/error-handler";
 
 export const schema = {
   id: z.string().describe("The ID of the scheduled message to update"),
@@ -20,7 +21,7 @@ export const metadata = {
   },
 };
 
-export default async function handler(args: InferSchema<typeof schema>) {
+export default withStructuredErrors(async (args: InferSchema<typeof schema>) => {
   const h = headers();
   const sdk = await getSDK(h["x-server-url"] as string, h["x-api-key"] as string);
   const options: { message?: string; scheduledFor?: number } = {};
@@ -28,4 +29,4 @@ export default async function handler(args: InferSchema<typeof schema>) {
   if (args.scheduledFor !== undefined) options.scheduledFor = args.scheduledFor;
   const result = await sdk.scheduledMessages.updateScheduledMessage(args.id, options);
   return JSON.stringify(result);
-}
+});
